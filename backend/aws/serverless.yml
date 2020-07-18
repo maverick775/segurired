@@ -6,6 +6,7 @@ provider:
     name: aws
     runtime: nodejs12.x
     stage: dev
+    region: us-west-1
     environment:
         CALLS_TABLE: ${self:service}-calls-${self:provider.stage}
     iamRoleStatements:
