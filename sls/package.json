@@ -11,5 +11,11 @@
     "twilio"
   ],
   "author": "Erick Villamar & Francisco Perez",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.719.0",
+    "tsc": "^1.20150623.0",
+    "twilio": "^3.48.1",
+    "typescript": "^3.9.7"
+  }
 }
