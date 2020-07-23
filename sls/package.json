@@ -4,12 +4,19 @@
   "description": "Serverless implementation with AWS used to handle the IoT integration with an existing security alarm product.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "deploy": "run npm build  & sls deploy -v"
   },
   "keywords": [
     "aws",
     "twilio"
   ],
   "author": "Erick Villamar & Francisco Perez",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.719.0",
+    "tsc": "^1.20150623.0",
+    "twilio": "^3.48.1",
+    "typescript": "^3.9.7"
+  }
 }
