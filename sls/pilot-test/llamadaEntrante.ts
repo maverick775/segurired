@@ -22,7 +22,7 @@ export const handler = async (event: APIGatewayEvent) => {
 async function handleCall() {
     const response = new twiml.VoiceResponse();
     const { Body, From } = qs.parse(event.body!);
-    const { Item } = await getItem({ Key: { phone_number: From as string } });
+    const { Item } = await getItem({ TableName: "registroAVP", Key: { phone_number: From as string } });
     if (Item) {
         response.say(
             "Bienvenido a segurired. Listo para activar"
