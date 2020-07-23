@@ -1,15 +1,16 @@
 {
-  "name": "segurired-iot",
+  "name": "segurired-iot-pilot-test",
   "version": "1.0.0",
   "description": "Serverless implementation with AWS used to handle the IoT integration with an existing security alarm product.",
-  "main": "index.js",
+  "main": "handler.js",
   "scripts": {
-    "build": "tsc",
-    "deploy": "run npm build  & sls deploy -v"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "aws",
-    "twilio"
+    "iot",
+    "twilio",
+    "serverless"
   ],
   "author": "Erick Villamar & Francisco Perez",
   "license": "ISC",
