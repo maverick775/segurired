@@ -5,48 +5,28 @@ org: lupnox
 provider:
   name: aws
   runtime: nodejs12.x
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> 5e4af158035757af754ce665f1995be1f199caac
   region: us-west-1
   stage: dev
-
-# you can add statements to the Lambda function's IAM Role here
-#  iamRoleStatements:
-#    - Effect: "Allow"
-#      Action:
-#        - "s3:ListBucket"
-#      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
-#    - Effect: "Allow"
-#      Action:
-#        - "s3:PutObject"
-#      Resource:
-#        Fn::Join:
-#          - ""
-#          - - "arn:aws:s3:::"
-#            - "Ref" : "ServerlessDeploymentBucket"
-#            - "/*"
-
-# you can define service wide environment variables here
-#  environment:
-#    variable1: value1
-
-# you can add packaging information here
-#package:
-#  include:
-#    - include-me.js
-#    - include-me-dir/**
-#  exclude:
-#    - exclude-me.js
-#    - exclude-me-dir/**
-<<<<<<< HEAD
->>>>>>> master
-=======
-
->>>>>>> 5e4af158035757af754ce665f1995be1f199caac
+  iamRoleStatements:
+        - Effect: Allow
+          Action:
+              - dynamodb:Query
+              - dynamodb:Scan
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+              - dynamodb:UpdateItem
+              - dynamodb:DeleteItem
+          Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/registroAVP"
 
 functions:
-  hello:
-    handler: handler.hello
+  responder:
+    handler: llamadaEntrante.handler
+    events:
+            - http:
+                  path: responer
+                  method: GET
+                  cors: true
+            - http:
+                  path: responder
+                  method: POST
+                  cors: true
