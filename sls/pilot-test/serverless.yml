@@ -6,7 +6,10 @@ provider:
   name: aws
   runtime: nodejs12.x
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 5e4af158035757af754ce665f1995be1f199caac
   region: us-west-1
   stage: dev
 
@@ -38,7 +41,11 @@ provider:
 #  exclude:
 #    - exclude-me.js
 #    - exclude-me-dir/**
+<<<<<<< HEAD
 >>>>>>> master
+=======
+
+>>>>>>> 5e4af158035757af754ce665f1995be1f199caac
 
 functions:
   hello:
