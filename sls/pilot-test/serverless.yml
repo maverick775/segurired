@@ -40,4 +40,4 @@ provider:
 
 functions:
   hello:
-    handler: handler.hello
+    handler: lambdas/getDeviceAtt.getAtts

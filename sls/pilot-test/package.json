@@ -16,6 +16,7 @@
   "author": "Erick Villamar & Francisco Perez",
   "license": "ISC",
   "dependencies": {
+    "aws-lambda": "^1.0.6",
     "aws-sdk": "^2.719.0",
     "tsc": "^1.20150623.0",
     "twilio": "^3.48.1",
