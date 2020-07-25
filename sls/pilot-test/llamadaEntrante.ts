@@ -9,6 +9,7 @@ export const handler = async (event: APIGatewayEvent) => {
     const { Body, From } = qs.parse(event.body!);
     const response = new twiml.VoiceResponse();
     var user = await getItem({ TableName: 'registroAVP', Key: { numero: From as string } });
+    //let item
     if(user){
         var device  = await getItem({ TableName: 'alarmas', Key: { id: user.Item.id } });
         if(!device.Item.activo){
