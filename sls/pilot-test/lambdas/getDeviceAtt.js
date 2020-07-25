@@ -8,7 +8,6 @@ module.exports.getAtts = async (event,context) => {
       return response.json();
     })
     .then(function (myJson) {
-      console.log('*************************************************** ANSWER ****************************************');  
       console.log(myJson);
     });
     
