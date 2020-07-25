@@ -16,16 +16,14 @@ provider:
               - dynamodb:PutItem
               - dynamodb:UpdateItem
               - dynamodb:DeleteItem
-          Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/registroAVP"
+          Resource: 
+            - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/registroAVP"
+            - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/alarmas"
 
 functions:
   responder:
     handler: llamadaEntrante.handler
     events:
-            - http:
-                  path: responer
-                  method: GET
-                  cors: true
             - http:
                   path: responder
                   method: POST
