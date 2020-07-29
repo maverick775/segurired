@@ -36,12 +36,50 @@ const getThingsAtt = async (deviceToken, attributes) =>{
             query += params+'&';
         }
     }
-    
+
     let url = route + query;
     let response = await fetch(url);
     return response.json();
 }
+
+const sendRPCRequest = async (deviceId, params)=> { 
+    let credentials = {}; 
+    try{
+        credentials = await getThingsAuth();
+    }catch(e){
+        /*ERROR HANDLING SHOULD BE HERE,
+        FOR EXAMPLE: TRYING TO REFRESH TOKEN
+        */
+    }
+    let url = process.env.THINGS_URL + `api/plugins/rpc/twoway/${deviceId}`;
+    let headers = {
+        'Content-Type': 'application/json',
+        'X-Authorization': 'Bearer '+ credentials.token
+    };
+    let opts = {
+        method: 'post',
+        headers: headers,
+        body: JSON.stringify(params)
+    }
+    try{
+        let response = await fetch(url, opts);
+        let status = response.status;
+        let resBody = response.json();
+        //LOGIC TO HANDLE RESPONSE SHOULD BE HERE
+
+    return {
+        status: status,
+        body: resBody
+    }
+    }catch(e){
+        console.error(e);
+
+        //LOGIC TO HANDLE ERROR SHOULD BE HERE
+    }
+}
+
 module.exports={
     getThingsAuth,
-    getThingsAtt
+    getThingsAtt,
+    sendRPCRequest
 }
