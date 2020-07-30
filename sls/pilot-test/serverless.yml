@@ -24,9 +24,9 @@ provider:
 #            - "Ref" : "ServerlessDeploymentBucket"
 #            - "/*"
 
-# you can define service wide environment variables here
-#  environment:
-#    variable1: value1
+#environment variables here
+  environment:
+    THINGS_URL: 'http://ec2-3-101-90-91.us-west-1.compute.amazonaws.com:8080/'
 
 # you can add packaging information here
 #package:
@@ -39,5 +39,5 @@ provider:
 
 
 functions:
-  hello:
-    handler: lambdas/getDeviceAtt.getAtts
+  requestRPC:
+    handler: lambdas/rpcRequest.sendRPC
