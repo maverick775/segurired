@@ -4,8 +4,7 @@
   "description": "Serverless implementation with AWS used to handle the IoT integration with an existing security alarm product.",
   "main": "handler.js",
   "scripts": {
-    "build": "tsc",
-    "deploy": "npm run build & sls deploy -v"
+    "build": "tsc"
   },
   "keywords": [
     "aws",
@@ -18,9 +17,11 @@
   "dependencies": {
     "@types/aws-lambda": "^8.10.59",
     "@types/aws-sdk": "^2.7.0",
+    "@types/node-fetch": "^2.5.7",
     "@types/twilio": "^2.11.0",
     "aws-lambda": "^1.0.6",
     "aws-sdk": "^2.719.0",
+    "node-fetch": "^2.6.0",
     "tsc": "^1.20150623.0",
     "twilio": "^3.48.1",
     "typescript": "^3.9.7"

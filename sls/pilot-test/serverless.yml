@@ -19,6 +19,10 @@ provider:
           Resource: 
             - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/registroAVP"
             - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/alarmas"
+  
+  #environment variables here
+  environment:
+    THINGS_URL: 'http://ec2-3-101-90-91.us-west-1.compute.amazonaws.com:8080/'
 
 functions:
   responder:
@@ -28,3 +32,16 @@ functions:
                   path: responder
                   method: POST
                   cors: true
+  requestRPC:
+    handler: lambdas/rpcRequest.sendRPC
+
+
+
+# you can add packaging information here
+#package:
+#  include:
+#    - include-me.js
+#    - include-me-dir/**
+#  exclude:
+#    - exclude-me.js
+#    - exclude-me-dir/**
