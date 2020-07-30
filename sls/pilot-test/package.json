@@ -25,5 +25,14 @@
     "tsc": "^1.20150623.0",
     "twilio": "^3.48.1",
     "typescript": "^3.9.7"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lupnox/segurired.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lupnox/segurired/issues"
+  },
+  "homepage": "https://github.com/lupnox/segurired#readme"
 }
