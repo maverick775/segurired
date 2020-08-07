@@ -9,7 +9,7 @@ interface UpdateItemParams {
     };
     UpdateExpression: string;
     ExpressionAttributeValues: {
-        [key: string]: string | boolean | number | undefined | null;
+        [key: string]: string | number | undefined | null;
     };
     ReturnValues?: string;
 }
