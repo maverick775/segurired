@@ -26,14 +26,26 @@ provider:
 
 functions:
   responder:
-    handler: llamadaEntrante.handler
+    handler: lambdas/twilio/llamadaEntrante.handler
     events:
             - http:
                   path: responder
                   method: POST
                   cors: true
-  requestRPC:
-    handler: lambdas/rpcRequest.sendRPC
+  handleActivateGather:
+    handler: lambdas/twilio/handleActivateGather.handler
+    events:
+            - http:
+                  path: handleActivateGather
+                  method: POST
+                  cors: true
+  requestRPCon:
+    handler: lambdas/thingsBoard/rpcRequest.sendRPC
+    events: 
+             - http:
+                  path: requestRPCon
+                  method: POST
+                  cors: true
 
 
 

@@ -3,44 +3,61 @@ import { twiml } from "twilio";
 //import { sendTwiml } from "./utils";
 
 import qs from "querystring";
-import { getItem, updateItem } from "./dynamodb";
-import {sendRPCRequest} from "./utils";
+import { getItem, updateItem } from "../../utils/dynamodb";
 
 export const handler = async (event: APIGatewayEvent) => {
     const response = new twiml.VoiceResponse();
     const { Body, From } = qs.parse(event.body!);
-    let user = await getItem({ TableName: 'registroAVP', Key: { numero: From as string } });
-    if(user.Item) {
+    let caller;
+    if(From){ 
+        caller = From.slice(-10);
+    }
+    let user = await getItem({ TableName: 'registroAVP', Key: { numero: caller as string } });
+
+    if(user.Item === undefined) {
         response.say(
             {
                 language: 'es-MX'
             },
             "Acceso restringido. Contacte a su representante."
         );
-        let deviceId = '49934ed0-cb7e-11ea-bab3-ff8fe6e0c30b';
-        let params = {
-            "method": "actAl",
-            "params": {}
-        };
-        let result =  await sendRPCRequest(deviceId, params);
-        console.log(result);
     } else {
         let device  = await getItem({ TableName: 'alarmas', Key: { id: user.Item.id } });
-        if(!device.Item.activo){
+        if(device.Item === undefined){
             response.say(
                 {
                     language: 'es-MX'
                 },
-                "Bienvenido a segurirred. Se activará la alarma"
+                "No se encontró un dispositivo asociado a este número. Contacte a su administrador"
             );
-
+        }
+        if(!device.Item.activo){
+            let query = `?deviceId=${user.Item.id}`
+            let gather = response.gather({
+                input: 'dtmf',
+                timeout: 10,
+                numDigits: 1,
+                action: 'https://jp0sa107zc.execute-api.us-west-1.amazonaws.com/auth-things/handleActivateGather'+query
+            });
+            gather.say(
+                {
+                    language: 'es-MX'
+                },
+                "Bienvenido a segurirred. Presione uno para activar alarma"
+            );
         } else {
             if(user.Item.tipo === "admin"){
-                response.say(
+                let gather = response.gather({
+                    input: 'dtmf',
+                    timeout: 10,
+                    numDigits: 1,
+                    action: 'https://jp0sa107zc.execute-api.us-west-1.amazonaws.com/auth-things/handleDeactivateGather'
+                });
+                gather.say(
                     {
                         language: 'es-MX'
                     },
-                    "Alarma activa. Confirme desactivacion."
+                    "Alarma está activa, para desactivar presione 1"
                 );
             } else {
                 response.say(

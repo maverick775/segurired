@@ -1,6 +1,6 @@
 'use strict'
 const fetch = require('node-fetch');
-const {sendRPCRequest} = require('./../utils');
+const {sendRPCRequest} = require('../../utils');
 
 module.exports.sendRPC = async (event,context) => {
   //This params should be passed from the event.
