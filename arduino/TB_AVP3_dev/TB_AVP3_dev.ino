@@ -1,23 +1,29 @@
 
 //Seleccionar el modulo:
 #define TINY_GSM_MODEM_SIM800
-// #define TINY_GSM_MODEM_SIM900
+//#define TINY_GSM_MODEM_SIM900
 
 // Pines de comunicacion con modulo
-#define PIN_TX    62
-#define PIN_RX    63
+#define PIN_TX    63
+#define PIN_RX    62
+// Pines de comunicacion con modulos RF
+#define rf_Rx  0 // int for Receive pin.
+#define rf_Tx  6 // int for Transmit pin.
 
 // Baudrate para debugging
 #define SERIAL_DEBUG_BAUD   115200
+
+//#define MQTT_KEEPALIVE 300
 
 // Token de Thingsboard
 #define TOKEN               "cmuZkINvXJF1yexP66Hk"
 #define THINGSBOARD_SERVER  "ec2-3-101-90-91.us-west-1.compute.amazonaws.com"
 
 //Tiempos de espera en milis
-#define AC_WAIT 6000
-#define Alr_WAIT 6000
-#define Emg_WAIT 18000
+#define REFRESH 30000
+#define AC_WAIT 60000
+#define Alr_WAIT 60000
+#define Emg_WAIT 180000
 #define Tone_WAIT 3000000
 #define SPause_WAIT 500000
 #define LPause_WAIT 1320000
@@ -32,11 +38,11 @@
 #include <avr/wdt.h>
 #include "ThingsBoard.h"
 
-unsigned long controla[] = {9572225,
-                            10728801};
+unsigned long controla[] = {6280640,
+                            5592368};
 
-unsigned long controlb[] = {9572226,
-                            10728802};
+unsigned long controlb[] = {6280496,
+                            5592332};
 
 int ncr = (sizeof(controla)/sizeof(controla[0]));
 
@@ -55,6 +61,7 @@ TinyGsmClient client(modem);
 // Inicializa instancia Thinsboard
 ThingsBoard tb(client);
 
+
 // APN de SIM: "em" para EMnify
 const char apn[]  = "em";
 
@@ -65,21 +72,20 @@ bool subscribed = false;
 
 
 // Variables de estado
-int crid;
-bool active;
-bool val_upt;
-bool trig;
+volatile bool val_upt = false;
+volatile bool active = false;
+volatile bool warn   = false;
+volatile bool trig = false;
 bool bat    = false;
 bool rf     = false;
 bool valid  = false;
-bool warn   = false;
+int crid;
+
 bool pause  = false;
 unsigned long timestamp;
 unsigned long ac_timestamp;
+unsigned long gsm_timestamp;
 
-// Pines de comunicacion con modulos RF
-int rf_Rx = 0; // int for Receive pin.
-int rf_Tx = 6; // int for Transmit pin.
 
 //Pines de salida
 int led_brd = 13;
@@ -95,6 +101,7 @@ RPC_Response activaAlarma(const RPC_Data &data){
     warn  = false;
     trig = true;
     Serial.println("Emergencia activada por server");
+    upt_gpios();
     return RPC_Response("Resultado", "Emergencia activa");
   } else {
     return RPC_Response("Error", "Alarma ya esta activada");
@@ -107,6 +114,7 @@ RPC_Response activaAlerta(const RPC_Data &data){
     warn  = true;
     trig = true;
     Serial.println("Alerta activada por server");
+    upt_gpios();
     return RPC_Response("Resultado", "Alerta activa");
   } else {
     return RPC_Response("Error", "No es posible revocar emergencia");
@@ -118,6 +126,7 @@ RPC_Response desactivaAlarma(const RPC_Data &data){
     active = false;
     trig = true;
     Serial.println("Alarma apagada por server");
+    upt_gpios();
     return RPC_Response("Resultado","Alarma desactivada");
   } else {
     return RPC_Response("Error", "Alarma ya esta desactivada");
@@ -125,31 +134,34 @@ RPC_Response desactivaAlarma(const RPC_Data &data){
 }
 
 RPC_Callback callbacks[] = {
-  { "actEm", activaAlerta },
-  { "actAl", activaAlarma },
+  { "actEm", activaAlarma },
+  { "actAl", activaAlerta },
   { "desAl", desactivaAlarma },
 };
 
 void setup() {
   // Baud rate para monitor serial
   Serial.begin(SERIAL_DEBUG_BAUD);
-
-  // Comienza con baud rate predefinido
   serialGsm.begin(115200);
   delay(3000);
-
-  //Comunicacion serial con modulo
   serialGsm.write("AT+IPR=9600\r\n");
   serialGsm.end();
   serialGsm.begin(9600);
+  if(!modem.init()){
+    if(!serialGsm.isListening()) { //revisar la comunicacion del modulo
+      //Comunicacion serial con modulo
+      Serial.println("Inicializando modulo GSM...");
+      TinyGsmAutoBaud(serialGsm, 9600, 115200);
+      return;
+    }
+    Serial.println("Reiniciando modulo GSM...");
+    modem.restart();
+    delay(10000);
+    return;
+  }
+  modem_setup();
 
-  // Reinicia el modulo
-  Serial.println(F("Inicializando modulo GSM..."));
-  modem.restart();
-  String modemInfo = modem.getModemInfo();
-  Serial.print(F("Modulo: "));
-  Serial.println(modemInfo);
-  
+
   //Inicializa recepcion RF para controles
   mySwitch.enableReceive(rf_Rx);  // Receiver on
   mySwitch.setRepeatTransmit(12);
@@ -167,54 +179,93 @@ void setup() {
   digitalWrite(Sirena,HIGH);
   digitalWrite(Fuego,HIGH);
   pinMode(led_brd,OUTPUT);
+
 }
 
 void loop() {
-  if (!modem.isNetworkConnected()) modem_connect();
-  if (!tb.connected()) tb_connect();
-  if (mySwitch.available()) nremote();
-  if(digitalRead(Sens_Carga)==bat) ACDC();
+  //mySwitch.enableReceive(rf_Rx);  // Receiver on
   if(active) timer();
+  if(mySwitch.available()) nremote();
+  if(digitalRead(Sens_Carga)==bat) ACDC();
   if(trig) upt_gpios();
   if(val_upt) tb_upt();
-  tb.loop();
+  if(!modemConnected && millis()>gsm_timestamp+REFRESH) modem_setup();
+  else if(modemConnected) check_connection();
+  tb.loop();   
 }
 
-void modem_connect(){
-  Serial.print(F("Esperando red..."));
-  if (!modem.waitForNetwork()) {
-      Serial.println(" error");
-      delay(10000);
+void check_connection(){ 
+  mySwitch.disableReceive();
+  delay(300);
+  //noInterrupts();
+  if (!modem.isGprsConnected()){
+    Serial.println("Error en modem");
+    modemConnected = false;
+  }
+  else if (!tb.connected()) {
+    Serial.println("Server desconectado");
+    modemConnected = false;
+  }
+  mySwitch.enableReceive(rf_Rx);
+  delay(300);
+  //interrupts();
+}
+
+void modem_setup(){ 
+  //mySwitch.disableReceive();
+  if(!modem.waitForNetwork(6000L)) {
+      Serial.print(F("Esperando red..."));
+      gsm_timestamp = millis();
+      //mySwitch.enableReceive(rf_Rx);
       return;
   }
-  Serial.println(" OK");
-  Serial.print(F("Conectando a "));
-  Serial.print(apn);
-  if (!modem.gprsConnect(apn)) {
-    Serial.println(" error");
-    delay(10000);
-    return;
+  Serial.println("Modem OK");
+  if(!modem.isGprsConnected()){
+    Serial.print(F("Conectando a "));
+    Serial.print(apn);
+    if (!modem.gprsConnect(apn)) {
+      Serial.println(" error");
+      gsm_timestamp = millis();
+      //mySwitch.enableReceive(rf_Rx);
+      return;
+    }
   }
+  Serial.println(" OK");
+  String modemInfo = modem.getModemInfo();
+  Serial.print(F("Modulo: "));
+  Serial.println(modemInfo);
+  Serial.println("Iniciado exitosamente");
+  if(!tb.connected()){
+    Serial.print("Conectando a : ");
+    Serial.print(THINGSBOARD_SERVER);
+    Serial.print(" con token ");
+    Serial.println(TOKEN);
+    subscribed = false;
+    if(!tb.connect(THINGSBOARD_SERVER, TOKEN)) {
+      Serial.println("Error de conexion con server");
+      gsm_timestamp = millis();
+      //mySwitch.enableReceive(rf_Rx);
+      return;
+    } 
+  }
+  if(!subscribed) {
+    if (!tb.RPC_Subscribe(callbacks,3)) {
+      Serial.println("Error al subscribir RPC");
+      gsm_timestamp = millis();
+      //mySwitch.enableReceive(rf_Rx);
+      return;
+    } 
+  }
+  Serial.println("Server OK");
   modemConnected = true;
-  Serial.println(" OK");
-}
-
-void tb_connect(){ // Conecta a server de ThingsBoard
-  Serial.print("Conectando a : ");
-  Serial.print(THINGSBOARD_SERVER);
-  Serial.print(" con token ");
-  Serial.println(TOKEN);
-  if (!tb.connect(THINGSBOARD_SERVER, TOKEN)) {
-    Serial.println("Error de conexion");
-    return;
-  }
-  if (!tb.RPC_Subscribe(callbacks,3)) {
-    Serial.println("Error al subscribir RPC");
-    return;
-  }
+  subscribed = true;
+  gsm_timestamp = millis();
+  //mySwitch.enableReceive(rf_Rx);
 }
 
 void tb_upt(){
+  //mySwitch.disableReceive();
+  if(!tb.connected()) return;
   tb.sendAttributeBool("Activo",active);
   tb.sendAttributeBool("Alerta",warn);
   tb.sendAttributeBool("Bateria",bat);
@@ -227,7 +278,7 @@ void tb_upt(){
 ///////Funcion para el manejo de salidas y activar los repetidores
 //////////////////////////////////////////////////////////////////
 void upt_gpios(){
-  mySwitch.disableReceive();         // Deshabilita la interrupcion de recepcion RF
+  //mySwitch.disableReceive();         // Deshabilita la interrupcion de recepcion RF
   if(active){
     digitalWrite(led_brd,HIGH);
     if(!warn){                       //Modo de ALARMA
@@ -254,7 +305,7 @@ void upt_gpios(){
   }
   trig = false;
   val_upt = true;
-  mySwitch.enableReceive(rf_Rx); // Habilita la recepcion por interrupcion de software
+  //mySwitch.enableReceive(rf_Rx); // Habilita la recepcion por interrupcion de software
 }
 
 //////////////////////////////////////////////////////
@@ -280,6 +331,7 @@ void nremote(){
           Serial.print(crid);
           active = true; 
           warn = false;
+          trig = true;
           rf = true;
           upt_gpios();
           break;
@@ -294,6 +346,7 @@ void nremote(){
           Serial.print(crid);
           active = true; 
           warn = true;
+          trig = true;
           rf = true;
           upt_gpios();
           break;
