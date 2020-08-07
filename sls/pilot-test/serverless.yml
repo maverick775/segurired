@@ -32,18 +32,11 @@ functions:
                   path: responder
                   method: POST
                   cors: true
-  handleActivateGather:
-    handler: lambdas/twilio/handleActivateGather.handler
+  handleGather:
+    handler: lambdas/twilio/handleGather.handler
     events:
             - http:
-                  path: handleActivateGather
-                  method: POST
-                  cors: true
-  requestRPCon:
-    handler: lambdas/thingsBoard/rpcRequest.sendRPC
-    events: 
-             - http:
-                  path: requestRPCon
+                  path: handleGather
                   method: POST
                   cors: true
 
