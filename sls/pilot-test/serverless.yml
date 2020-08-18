@@ -54,7 +54,9 @@ functions:
                   path: refreshTBT
                   method: GET
                   cors: true
-
+            - schedule:
+                  rate: rate(30 minutes) 
+                  enabled: true 
 
 
 # you can add packaging information here
