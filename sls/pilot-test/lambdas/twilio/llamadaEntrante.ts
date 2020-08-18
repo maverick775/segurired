@@ -72,6 +72,7 @@ export const handler = async (event: APIGatewayEvent) => {
             }
         }
     }
+    console.log(twiml.toString());
     return sendTwiml(response);
     
 };
