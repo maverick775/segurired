@@ -126,19 +126,24 @@ const getThingsAtt = async (deviceToken, attributes) =>{
 const sendRPCRequest = async (deviceId, params)=> { 
     let credentials = {}; 
     try{
-        credentials = await getThingsTBTokensFromSecrets();
-    }catch(e){
-        credentials = await getNewAuthTokensTB();
-        let params = {
-            AccessTokenTB: credentials.token, 
-            RefreshTokenTB: credentials.refreshToken
+        let answer = await getThingsTBTokensFromSecrets();
+        if(answer.status === 'OK'){
+            credentials = answer.data;
+        }else{
+            throw new Error(answer.data);
         }
-        let answer = await updateTBTokensInSecrets(params)
+    }catch(e){
+        let answer = await getNewAuthTokensTB();
+        let credentials = {
+            AccessTokenTB: answer.data.token, 
+            RefreshTokenTB: answer.data.refreshToken
+        }
+        await updateTBTokensInSecrets(credentials);
     }
     let url = process.env.THINGS_URL + `api/plugins/rpc/twoway/${deviceId}`;
     let headers = {
         'Content-Type': 'application/json',
-        'X-Authorization': 'Bearer '+ credentials.token
+        'X-Authorization': 'Bearer '+ credentials.AccessTokenTB
     };
     let opts = {
         method: 'post',

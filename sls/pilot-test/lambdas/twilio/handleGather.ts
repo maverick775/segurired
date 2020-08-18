@@ -33,8 +33,9 @@ export const handler = async (event: APIGatewayEvent) => {
                 "method": method,
                 "params": {}
             };
-            let thingsAnswer = await sendRPCRequest(deviceId, params);
-            console.log(thingsAnswer);
+            // let thingsAnswer = await sendRPCRequest(deviceId, params);
+            // console.log(thingsAnswer);
+            console.log('Alarma activada');
             response.say(
                 {
                     language: 'es-MX'
@@ -59,8 +60,9 @@ export const handler = async (event: APIGatewayEvent) => {
                 "method": "desAl",
                 "params": {}
             };
-            let thingsAnswer = await sendRPCRequest(deviceId, params);
-            console.log(thingsAnswer);
+            // let thingsAnswer = await sendRPCRequest(deviceId, params);
+            // console.log(thingsAnswer);
+            console.log('Alarma desactivada');
             response.say(
                 {
                     language: 'es-MX'
