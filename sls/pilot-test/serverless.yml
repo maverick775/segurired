@@ -19,10 +19,17 @@ provider:
           Resource: 
             - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/registroAVP"
             - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/alarmas"
+        - Effect: Allow
+          Action: 
+              - secretsmanager:GetSecretValue
+              - secretsmanager:PutSecretValue
+          Resource:
+            - "arn:aws:secretsmanager:us-west-1:793033367648:secret:TB/RPCAuth-ekj9pb"
   
   #environment variables here
   environment:
     THINGS_URL: 'http://ec2-3-101-90-91.us-west-1.compute.amazonaws.com:8080/'
+    REGION: "${opt:region, self:provider.region}"
 
 functions:
   responder:
@@ -39,7 +46,17 @@ functions:
                   path: handleGather
                   method: POST
                   cors: true
-
+  refreshTBT:
+    handler: lambdas/thingsBoard/refreshTBT.refreshTBToken
+    timeout: 15
+    events:
+            - http:
+                  path: refreshTBT
+                  method: GET
+                  cors: true
+            - schedule:
+                  rate: rate(30 minutes) 
+                  enabled: true 
 
 
 # you can add packaging information here

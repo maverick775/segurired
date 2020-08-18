@@ -35,6 +35,7 @@ export const handler = async (event: APIGatewayEvent) => {
             };
             let thingsAnswer = await sendRPCRequest(deviceId, params);
             console.log(thingsAnswer);
+            console.log('Alarma activada');
             response.say(
                 {
                     language: 'es-MX'
@@ -61,6 +62,7 @@ export const handler = async (event: APIGatewayEvent) => {
             };
             let thingsAnswer = await sendRPCRequest(deviceId, params);
             console.log(thingsAnswer);
+            console.log('Alarma desactivada');
             response.say(
                 {
                     language: 'es-MX'

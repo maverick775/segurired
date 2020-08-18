@@ -23,6 +23,7 @@ export const handler = async (event: APIGatewayEvent) => {
         );
     } else {
         let device  = await getItem({ TableName: 'alarmas', Key: { id: user.Item.id } });
+        //SUSTITUIR BUSQUEDA DE PARAMS EN DYNAMO POR BUSQUEDA EN TB
         if(device.Item === undefined){
             response.say(
                 {
@@ -30,6 +31,7 @@ export const handler = async (event: APIGatewayEvent) => {
                 },
                 "No se encontró un dispositivo asociado a este número. Contacte a su administrador"
             );
+            console.error(`El dispositivo ${user.Item.id} no se encontró en la base de datos`);
         }
         if(!device.Item.activo){
             let query = `?deviceId=${user.Item.id}&alerta=${device.Item.alerta}&run=activate`
