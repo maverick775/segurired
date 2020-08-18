@@ -1,7 +1,87 @@
 'use strict'
 const fetch = require('node-fetch');
+const { getSecretValue, putSecretValue } = require('./secrets');
 
-const getThingsAuth = async () => {
+const getThingsTBTokensFromSecrets = async () => { 
+    //THIS FUNCTION SHOULD BE CHANGED SO JUST HANDLE WHETHER TO GET A REFRESHED ACCESS TOKEN OR A WHOLE NEW TOKEN
+    try {
+        let data = await getSecretValue("TB/RPCAuth");
+        let secret = '';
+        if ('SecretString' in data) {
+            secret = data.SecretString;
+        } else {
+            let buff = new Buffer(data.SecretBinary, 'base64');
+            secret = buff.toString('ascii');
+        }
+        return {
+            status: 'OK',
+            data: secret
+        } 
+    }catch(e){
+        console.error(e);
+        return {
+            status: 'ERROR',
+            data: e
+        }
+    }
+}
+
+const updateTBTokensInSecrets = async (newTokens) => {
+    //HERE SHOULD BE CODE TO CALL TB AND REFRESH TB TOKEN
+    console.log('Los tokens que llegaron a la funcion son: ');
+    console.log(newTokens);
+    if(typeof newTokens.AccessTokenTB === 'string' && typeof newTokens.RefreshTokenTB === 'string'){
+        let putSecretsValues = {
+            SecretId: "TB/RPCAuth",
+            SecretString: JSON.stringify(newTokens)
+        };
+        try{
+            let newSecrets = await putSecretValue(putSecretsValues);
+            return {
+                status: 'OK',
+                data: newSecrets
+            }
+        }catch(e){
+            console.error('Tokens could not be updated in Secrets Manager');
+            console.error(e);
+            return {
+                status: 'ERROR',
+                data: e
+            };
+        }
+    }else{
+        console.error('One of the tokens passed to this function is missing, please check your passed parameters.');
+        return {
+            status: 'ERROR',
+            data: new Error('One of the tokens passed to this function is missing, please check your passed parameters.')
+        }
+    }
+}
+
+const refreshAccessTokenTB = async(currTokens) => {
+    if(typeof currTokens.AccessTokenTB === 'string' && typeof currTokens.RefreshTokenTB === 'string'){
+        var accessToken = 'Bearer ' + currTokens.AccessTokenTB;
+        var refreshToken = currTokens.RefreshTokenTB;
+    }else{
+        throw new Error('One of the tokens passed to this function is missing, please check your passed parameters.');
+    }
+    //HERE SHOULD BE CODE TO GET NEW TOKEN AND REFRESH TOKEN IN CASE REFRESH TOKEN EXPIRES
+    let url = 'http://ec2-3-101-90-91.us-west-1.compute.amazonaws.com:8080/api/auth/token';
+    let headers = {'Content-Type': 'application/json', 'X-Authorization': accessToken};
+    let params = {
+        "refreshToken":refreshToken
+    };
+    let opts = {
+        method: 'post',
+        headers: headers,
+        body: JSON.stringify(params)
+    };
+    let response = await fetch(url, opts);
+    return response.json();
+}
+
+const getNewAuthTokensTB = async() => {
+    //HERE SHOULD BE CODE TO GET NEW TOKEN AND REFRESH TOKEN IN CASE REFRESH TOKEN EXPIRES
     let url = 'http://ec2-3-101-90-91.us-west-1.compute.amazonaws.com:8080/api/auth/login';
     let headers = {'Content-Type': 'application/json'};
     let params = {
@@ -16,6 +96,7 @@ const getThingsAuth = async () => {
     let response = await fetch(url, opts);
     return response.json();
 }
+
 
 // let wantedAttributes = {
 //     sharedKeys: ['active']
@@ -45,11 +126,14 @@ const getThingsAtt = async (deviceToken, attributes) =>{
 const sendRPCRequest = async (deviceId, params)=> { 
     let credentials = {}; 
     try{
-        credentials = await getThingsAuth();
+        credentials = await getThingsTBTokensFromSecrets();
     }catch(e){
-        /*ERROR HANDLING SHOULD BE HERE,
-        FOR EXAMPLE: TRYING TO REFRESH TOKEN
-        */
+        credentials = await getNewAuthTokensTB();
+        let params = {
+            AccessTokenTB: credentials.token, 
+            RefreshTokenTB: credentials.refreshToken
+        }
+        let answer = await updateTBTokensInSecrets(params)
     }
     let url = process.env.THINGS_URL + `api/plugins/rpc/twoway/${deviceId}`;
     let headers = {
@@ -67,19 +151,23 @@ const sendRPCRequest = async (deviceId, params)=> {
         let resBody = response.json();
         //LOGIC TO HANDLE RESPONSE SHOULD BE HERE
 
-    return {
-        status: status,
-        body: resBody
-    }
+        return {
+            status: status,
+            body: resBody
+        }
     }catch(e){
         console.error(e);
 
         //LOGIC TO HANDLE ERROR SHOULD BE HERE
     }
+    //REGRESAR UN ERROR PORQUE NO SE PUDO COMPLETAR LA SOLICITUD
 }
 
 module.exports={
-    getThingsAuth,
+    getThingsTBTokensFromSecrets,
+    updateTBTokensInSecrets,
+    refreshAccessTokenTB,
+    getNewAuthTokensTB,
     getThingsAtt,
     sendRPCRequest
 }
