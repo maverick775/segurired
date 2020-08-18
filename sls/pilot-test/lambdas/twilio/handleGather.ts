@@ -1,6 +1,7 @@
 
 import { APIGatewayEvent } from "aws-lambda";
 import { twiml } from "twilio";
+import { twilio } from "twilio";
 import { sendRPCRequest } from "../../utils";
 import { updateItem } from "../../utils/dynamodb";
 import qs from "querystring";
@@ -33,8 +34,8 @@ export const handler = async (event: APIGatewayEvent) => {
                 "method": method,
                 "params": {}
             };
-            let thingsAnswer = await sendRPCRequest(deviceId, params);
-            console.log(thingsAnswer);
+            // let thingsAnswer = await sendRPCRequest(deviceId, params);
+            // console.log(thingsAnswer);
             console.log('Alarma activada');
             response.say(
                 {
@@ -60,8 +61,8 @@ export const handler = async (event: APIGatewayEvent) => {
                 "method": "desAl",
                 "params": {}
             };
-            let thingsAnswer = await sendRPCRequest(deviceId, params);
-            console.log(thingsAnswer);
+            // let thingsAnswer = await sendRPCRequest(deviceId, params);
+            // console.log(thingsAnswer);
             console.log('Alarma desactivada');
             response.say(
                 {
@@ -94,6 +95,7 @@ export const handler = async (event: APIGatewayEvent) => {
             console.error(e);
         }
     }
+    console.log(response.toString());
     return sendTwiml(response);
 };
 
