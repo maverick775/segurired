@@ -1,9 +1,9 @@
 import { APIGatewayEvent } from "aws-lambda";
 import { twiml } from "twilio";
-//import { sendTwiml } from "./utils";
 
 import qs from "querystring";
 import { getItem, updateItem } from "../../utils/dynamodb";
+import { getThingsAtt } from "../../utils";
 
 export const handler = async (event: APIGatewayEvent) => {
     const response = new twiml.VoiceResponse();
@@ -33,7 +33,13 @@ export const handler = async (event: APIGatewayEvent) => {
             );
             console.error(`El dispositivo ${user.Item.id} no se encontró en la base de datos`);
         }
-        if(!device.Item.activo){
+        let neededParams = {
+            clientKeys: ['Activo','Alerta','Emergencia']
+        }
+        let currParams = await getThingsAtt(device.Item.token);
+        console.log('Parametros');
+        console.log(currParams);
+        if(currParams.activo){
             let query = `?deviceId=${user.Item.id}&alerta=${device.Item.alerta}&run=activate`
             let gather = response.gather({
                 input: 'dtmf',
