@@ -110,8 +110,8 @@ const getThingsAtt = async (deviceToken, attributes) =>{
         let key = attKeys[i];
         if(key === 'sharedKeys' || key === 'clientKeys'){
             if(!Array.isArray(attributes[key])){
-                console.error('Params of ' + key + ' are not array');
-                return new Error('Params of ' + key + ' are not array');
+                console.error('Params of ' + key + ' are not an array');
+                return new Error('Params of ' + key + ' are not an array');
             }
             let params = key + '=' + attributes[key].join(',');
             query += params+'&';
@@ -154,7 +154,6 @@ const sendRPCRequest = async (deviceId, params)=> {
         let response = await fetch(url, opts);
         let status = response.status;
         let resBody = response.json();
-        //LOGIC TO HANDLE RESPONSE SHOULD BE HERE
 
         return {
             status: status,
@@ -162,10 +161,11 @@ const sendRPCRequest = async (deviceId, params)=> {
         }
     }catch(e){
         console.error(e);
-
-        //LOGIC TO HANDLE ERROR SHOULD BE HERE
+        return {
+            status: 500,
+            body: e
+        }
     }
-    //REGRESAR UN ERROR PORQUE NO SE PUDO COMPLETAR LA SOLICITUD
 }
 
 module.exports={

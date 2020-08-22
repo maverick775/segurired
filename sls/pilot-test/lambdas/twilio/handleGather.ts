@@ -35,15 +35,27 @@ export const handler = async (event: APIGatewayEvent) => {
             };
             let thingsAnswer = await sendRPCRequest(deviceId, params);
             console.log(thingsAnswer);
-            console.log('Alarma activada');
-            response.say(
-                {
-                    language: 'es-MX'
-                },
-                "Alarma activada, gracias."
-            );
-            dynamoUpdateParams.shouldItemUpdate = true;
-            dynamoUpdateParams.method = method;
+            //if(thingsAnswer.status >= 200 && thingsAnswer.status < 300){
+                console.log('Alarma activada');
+                response.say(
+                    {
+                        language: 'es-MX'
+                    },
+                    "Alarma activada, gracias. Para agregar mensaje de voz grabe después del tono"
+                );
+                response.record({
+                    timeout: 5,
+                    action: process.env.FINISH_CALL_URL,
+                    recordingStatusCallback: process.env.SEND_TG_MSG_URL
+                });
+                
+                dynamoUpdateParams.shouldItemUpdate = true;
+                dynamoUpdateParams.method = method;
+            // }else{
+            //     //HANDLE CASE WHERE THE RPC REQUEST WAS NO SUCCESFUL 
+            //     //NOTE: SINCE LAST FIRMWARE MAJOR CHANGES, THE RESPONSE'S BODY HAS BEEN A PROMISE, IT SHOULD BE CORRECTED
+            // }
+            
         } catch (e) {
             console.error('Error al activar alarma revisar registros de dispositivo ' + deviceId);
             console.error(e);
@@ -81,7 +93,7 @@ export const handler = async (event: APIGatewayEvent) => {
             );
         }
     }
-    //UPDATE DYNAMODB NEEDED SHOULD BE HERE
+    //UPDATE DYNAMODB 
     if (dynamoUpdateParams.shouldItemUpdate) {
         try{
             let answer = await updateAlarmStatus(deviceId, queryParams.run, dynamoUpdateParams.method);

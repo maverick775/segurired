@@ -36,16 +36,16 @@ export const handler = async (event: APIGatewayEvent) => {
         let neededParams = {
             clientKeys: ['Activo','Alerta','Emergencia']
         }
-        let currParams = await getThingsAtt(device.Item.token);
+        let currParams = await getThingsAtt(device.Item.token, neededParams);
         console.log('Parametros');
         console.log(currParams);
-        if(currParams.activo){
+        if(!currParams.Alerta){
             let query = `?deviceId=${user.Item.id}&alerta=${device.Item.alerta}&run=activate`
             let gather = response.gather({
                 input: 'dtmf',
                 timeout: 10,
                 numDigits: 1,
-                action: 'https://jp0sa107zc.execute-api.us-west-1.amazonaws.com/auth-things/handleGather'+query
+                action: process.env.GATHER_URL + query+query
             });
             gather.say(
                 {
@@ -60,7 +60,7 @@ export const handler = async (event: APIGatewayEvent) => {
                     input: 'dtmf',
                     timeout: 10,
                     numDigits: 1,
-                    action: 'https://jp0sa107zc.execute-api.us-west-1.amazonaws.com/auth-things/handleGather'+query
+                    action: process.env.GATHER_URL + query
                 });
                 gather.say(
                     {
