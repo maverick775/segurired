@@ -52,8 +52,8 @@ export const handler = async (event: APIGatewayEvent) => {
                 dynamoUpdateParams.shouldItemUpdate = true;
                 dynamoUpdateParams.method = method;
             // }else{
-            //     //HANDLE CASE WHERE THE RPC REQUEST WAS NO SUCCESFUL 
-            //     //NOTE: SINCE LAST FIRMWARE MAJOR CHANGES, THE RESPONSE'S BODY HAS BEEN A PROMISE, IT SHOULD BE CORRECTED
+                //HANDLE CASE WHERE THE RPC REQUEST WAS NOT SUCCESFUL 
+                //NOTE: SINCE LAST FIRMWARE MAJOR CHANGES, THE RESPONSE'S BODY HAS BEEN A PROMISE, IT SHOULD BE CORRECTED
             // }
             
         } catch (e) {

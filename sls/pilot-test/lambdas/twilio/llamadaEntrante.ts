@@ -45,7 +45,7 @@ export const handler = async (event: APIGatewayEvent) => {
                 input: 'dtmf',
                 timeout: 10,
                 numDigits: 1,
-                action: process.env.GATHER_URL + query+query
+                action: process.env.GATHER_URL + query
             });
             gather.say(
                 {
