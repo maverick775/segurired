@@ -8,10 +8,8 @@ export const handler = async (event: APIGatewayEvent) => {
     const response = new twiml.VoiceResponse();
     console.log("EVENT: \n" + JSON.stringify(event, null, 2));
     const body = event.body;
-    let queryParams = event.queryStringParameters;
     let parsedBody = parseGatherBody(body);
     console.log(parsedBody);
-    console.log(queryParams);
 
     response.say(
         {

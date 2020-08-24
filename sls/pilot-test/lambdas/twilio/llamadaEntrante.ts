@@ -23,7 +23,6 @@ export const handler = async (event: APIGatewayEvent) => {
         );
     } else {
         let device  = await getItem({ TableName: 'alarmas', Key: { id: user.Item.id } });
-        //SUSTITUIR BUSQUEDA DE PARAMS EN DYNAMO POR BUSQUEDA EN TB
         if(device.Item === undefined){
             response.say(
                 {
@@ -34,12 +33,13 @@ export const handler = async (event: APIGatewayEvent) => {
             console.error(`El dispositivo ${user.Item.id} no se encontró en la base de datos`);
         }
         let neededParams = {
-            clientKeys: ['Activo','Alerta','Emergencia']
+            sharedKeys: ['Triggered','Emergency'],
+            clientKeys:['Bateria']
         }
         let currParams = await getThingsAtt(device.Item.token, neededParams);
-        console.log('Parametros');
+        console.log('Current Device Parameters ');
         console.log(currParams);
-        if(!currParams.Alerta){
+        if(!currParams.shared.Triggered){
             let query = `?deviceId=${user.Item.id}&alerta=${device.Item.alerta}&run=activate`
             let gather = response.gather({
                 input: 'dtmf',

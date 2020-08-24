@@ -27,7 +27,7 @@ export const handler = async (event: APIGatewayEvent) => {
             }else if(parsedBody.Digits === '2'){
                 method = "actAl";
             }else{
-                //HANDLE DIFFERENT RESPONSE CASE
+                //HANDLE DIFFERENT RESPONSE CASE RETRY MAXIMUM 2 RETRIES
             }
             let params = {
                 "method": method,
@@ -35,7 +35,7 @@ export const handler = async (event: APIGatewayEvent) => {
             };
             let thingsAnswer = await sendRPCRequest(deviceId, params);
             console.log(thingsAnswer);
-            //if(thingsAnswer.status >= 200 && thingsAnswer.status < 300){
+            if(thingsAnswer.status >= 200 && thingsAnswer.status < 300){
                 console.log('Alarma activada');
                 response.say(
                     {
@@ -43,7 +43,7 @@ export const handler = async (event: APIGatewayEvent) => {
                     },
                     "Alarma activada, gracias. Para agregar mensaje de voz grabe después del tono"
                 );
-                response.record({
+                response.record({ //ENV VAR SHOULD JUST THE 
                     timeout: 5,
                     action: process.env.FINISH_CALL_URL,
                     recordingStatusCallback: process.env.SEND_TG_MSG_URL
@@ -51,10 +51,10 @@ export const handler = async (event: APIGatewayEvent) => {
                 
                 dynamoUpdateParams.shouldItemUpdate = true;
                 dynamoUpdateParams.method = method;
-            // }else{
+            }else{
                 //HANDLE CASE WHERE THE RPC REQUEST WAS NOT SUCCESFUL 
                 //NOTE: SINCE LAST FIRMWARE MAJOR CHANGES, THE RESPONSE'S BODY HAS BEEN A PROMISE, IT SHOULD BE CORRECTED
-            // }
+            }
             
         } catch (e) {
             console.error('Error al activar alarma revisar registros de dispositivo ' + deviceId);

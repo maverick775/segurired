@@ -65,7 +65,7 @@ functions:
                   method: GET
                   cors: true
             - schedule:
-                  rate: rate(30 minutes) 
+                  rate: rate(7 minutes) 
                   enabled: true 
   sendRecordedMsg:
     handler: lambdas/telegram/sendRecordedMsg.handler
