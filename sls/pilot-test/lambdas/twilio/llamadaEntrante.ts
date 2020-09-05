@@ -36,11 +36,25 @@ export const handler = async (event: APIGatewayEvent) => {
             sharedKeys: ['Triggered','Emergency'],
             clientKeys:['Bateria']
         }
-        let currParams = await getThingsAtt(device.Item.token, neededParams);
-        console.log('Current Device Parameters ');
-        console.log(currParams);
+        try{
+            var currParams = await getThingsAtt(device.Item.token, neededParams);
+            console.log('Current Device Parameters ');
+            console.log(currParams);
+        }catch(e){
+            console.error('Los parámetros no pudieron ser obtenidos de TB a continuación se muestra el error: ');
+            console.error(e);
+            var currParams = {
+                shared: {
+                    Triggered: device.Item?.Triggered 
+                },
+                client: {
+
+                }
+            }
+        }
+        
         if(!currParams.shared.Triggered){
-            let query = `?deviceId=${user.Item.id}&alerta=${device.Item.alerta}&run=activate`
+            let query = `?deviceId=${user.Item.id}&run=activate&retry=false`
             let gather = response.gather({
                 input: 'dtmf',
                 timeout: 10,
@@ -55,7 +69,7 @@ export const handler = async (event: APIGatewayEvent) => {
             );
         } else {
             if(user.Item.tipo === "admin"){
-                let query = `?deviceId=${user.Item.id}&alerta=${device.Item.alerta}&run=deactivate`
+                let query = `?deviceId=${user.Item.id}&run=deactivate&retry=false`
                 let gather = response.gather({
                     input: 'dtmf',
                     timeout: 10,

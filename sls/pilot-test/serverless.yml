@@ -30,9 +30,10 @@ provider:
   environment:
     REGION:          "${opt:region, self:provider.region}"
     THINGS_URL:      "http://ec2-3-101-90-91.us-west-1.compute.amazonaws.com:8080/"
-    GATHER_URL:      "https://l19mq6u0x5.execute-api.us-west-1.amazonaws.com/TBparams/handleGather"
-    FINISH_CALL_URL: "https://l19mq6u0x5.execute-api.us-west-1.amazonaws.com/TBparams/finishCall"
-    SEND_TG_MSG_URL: "https://l19mq6u0x5.execute-api.us-west-1.amazonaws.com/TBparams/sendRecordedMsg"
+    AWS_EX_URL:      "https://l19mq6u0x5.execute-api.us-west-1.amazonaws.com/TBparams"
+    GATHER_URL:      "${self:provider.environment.AWS_EX_URL}/handleGather"
+    FINISH_CALL_URL: "${self:provider.environment.AWS_EX_URL}/finishCall"
+    SEND_TG_MSG_URL: "${self:provider.environment.AWS_EX_URL}/sendRecordedMsg"
 
 functions:
   responder:

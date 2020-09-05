@@ -6,7 +6,7 @@ export const handler = async (event: APIGatewayEvent) => {
     const body = event.body;
     let parsedBody = parseTwilioBody(body);
     console.log(parsedBody);
-    console.log(decodeURIComponent(parsedBody.RecordingUrl));
+    console.log(decodeURIComponent(parsedBody.TranscriptionUrl));
 
     return {
         statusCode: 200,

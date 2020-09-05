@@ -27,7 +27,31 @@ export const handler = async (event: APIGatewayEvent) => {
             }else if(parsedBody.Digits === '2'){
                 method = "actAl";
             }else{
-                //HANDLE DIFFERENT RESPONSE CASE RETRY MAXIMUM 2 RETRIES
+                console.log(queryParams.retry);
+                if(queryParams.retry === 'false'){
+                    let query = `?deviceId=${deviceId}&run=${queryParams.run}&retry=true`
+                    let gather = response.gather({
+                        input: 'dtmf',
+                        timeout: 10,
+                        numDigits: 1,
+                        action: process.env.GATHER_URL + query
+                    });
+                    gather.say(
+                        {
+                            language: 'es-MX'
+                        },
+                        "Se introdujo un número incorrecto por favor presione uno para emergencia dos para alerta"
+                    );
+                }else{
+                    response.say(
+                        {
+                            language: 'es-MX'
+                        },
+                        "Se introdujo un número incorrecto nuevamente por lo tanto se cancela la peticion, hasta luego."
+                    );
+                    response.hangup(); 
+                }
+                return sendTwiml(response)
             }
             let params = {
                 "method": method,
@@ -43,7 +67,7 @@ export const handler = async (event: APIGatewayEvent) => {
                     },
                     "Alarma activada, gracias. Para agregar mensaje de voz grabe después del tono"
                 );
-                response.record({ //ENV VAR SHOULD JUST THE 
+                response.record({ //TRANSCRIBING SHOULD BE ADDED
                     timeout: 5,
                     action: process.env.FINISH_CALL_URL,
                     recordingStatusCallback: process.env.SEND_TG_MSG_URL
@@ -52,7 +76,9 @@ export const handler = async (event: APIGatewayEvent) => {
                 dynamoUpdateParams.shouldItemUpdate = true;
                 dynamoUpdateParams.method = method;
             }else{
+                console.error('Device could not be activated on first try, check the logs for more info');
                 //HANDLE CASE WHERE THE RPC REQUEST WAS NOT SUCCESFUL 
+                //MAYBE A SECOND TRY SHOULD BE ATTEMPETED OR AT LEAST SEND A MESSAGE TO EVERYONE
                 //NOTE: SINCE LAST FIRMWARE MAJOR CHANGES, THE RESPONSE'S BODY HAS BEEN A PROMISE, IT SHOULD BE CORRECTED
             }
             
@@ -68,8 +94,38 @@ export const handler = async (event: APIGatewayEvent) => {
         }
     } else if (queryParams.run === 'deactivate') {
         try {
+            let method = "";
+            if(parsedBody.Digits === '1'){
+                method = "desAl"
+            }else{
+                console.log(queryParams.retry);
+                if(queryParams.retry === 'false'){
+                    let query = `?deviceId=${deviceId}&run=${queryParams.run}&retry=true`
+                    let gather = response.gather({
+                        input: 'dtmf',
+                        timeout: 10,
+                        numDigits: 1,
+                        action: process.env.GATHER_URL + query
+                    });
+                    gather.say(
+                        {
+                            language: 'es-MX'
+                        },
+                        "Se introdujo un número incorrecto por favor presione uno para desactivar alarma"
+                    );
+                }else{
+                    response.say(
+                        {
+                            language: 'es-MX'
+                        },
+                        "Se introdujo un número incorrecto nuevamente por lo tanto se cancela la peticion, hasta luego."
+                    );
+                    response.hangup(); 
+                }
+                return sendTwiml(response)
+            }
             let params = {
-                "method": "desAl",
+                "method": method,
                 "params": {}
             };
             let thingsAnswer = await sendRPCRequest(deviceId, params);
