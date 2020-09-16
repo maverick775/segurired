@@ -15,7 +15,7 @@ const getThingsTBTokensFromSecrets = async () => {
         }
         return {
             status: 'OK',
-            data: secret
+            data: JSON.parse(secret)
         } 
     }catch(e){
         console.error(e);
@@ -28,8 +28,6 @@ const getThingsTBTokensFromSecrets = async () => {
 
 const updateTBTokensInSecrets = async (newTokens) => {
     //HERE SHOULD BE CODE TO CALL TB AND REFRESH TB TOKEN
-    console.log('Los tokens que llegaron a la funcion son: ');
-    console.log(newTokens);
     if(typeof newTokens.AccessTokenTB === 'string' && typeof newTokens.RefreshTokenTB === 'string'){
         let putSecretsValues = {
             SecretId: "TB/RPCAuth",
@@ -81,9 +79,10 @@ const refreshAccessTokenTB = async(currTokens) => {
 }
 
 const getNewAuthTokensTB = async() => {
-    //HERE SHOULD BE CODE TO GET NEW TOKEN AND REFRESH TOKEN IN CASE REFRESH TOKEN EXPIRES
     let url = 'http://ec2-3-101-90-91.us-west-1.compute.amazonaws.com:8080/api/auth/login';
     let headers = {'Content-Type': 'application/json'};
+    
+    //THIS INFO SHOULD BE SAVED ON A SECURE PLACE  I.E. SECRETS OR ENV.VAR
     let params = {
         "username":"tenant@thingsboard.org", 
         "password":"tenant"
@@ -106,12 +105,14 @@ const getThingsAtt = async (deviceToken, attributes) =>{
     let route = `${process.env.THINGS_URL}api/v1/${deviceToken}/`
     let query = 'attributes?';
     let attKeys = Object.keys(attributes);
+
+    //Change object to query format 
     for(let i=0; i<attKeys.length; i++){
         let key = attKeys[i];
         if(key === 'sharedKeys' || key === 'clientKeys'){
             if(!Array.isArray(attributes[key])){
-                console.error('Params of ' + key + ' are not array');
-                return new Error('Params of ' + key + ' are not array');
+                console.error('Params of ' + key + ' are not an array');
+                return new Error('Params of ' + key + ' are not an array');
             }
             let params = key + '=' + attributes[key].join(',');
             query += params+'&';
@@ -140,32 +141,36 @@ const sendRPCRequest = async (deviceId, params)=> {
         }
         await updateTBTokensInSecrets(credentials);
     }
+    console.log('Credentials:')
+    console.log(credentials);
     let url = process.env.THINGS_URL + `api/plugins/rpc/twoway/${deviceId}`;
-    let headers = {
-        'Content-Type': 'application/json',
-        'X-Authorization': 'Bearer '+ credentials.AccessTokenTB
+    let headersAuth = {
+        "Content-Type": "application/json",
+        "X-Authorization": "Bearer " + credentials.AccessTokenTB
     };
     let opts = {
         method: 'post',
-        headers: headers,
+        headers: headersAuth,
         body: JSON.stringify(params)
     }
+    console.log(opts);
     try{
         let response = await fetch(url, opts);
+        console.log(response);
         let status = response.status;
         let resBody = response.json();
-        //LOGIC TO HANDLE RESPONSE SHOULD BE HERE
-
+        
         return {
             status: status,
             body: resBody
         }
     }catch(e){
         console.error(e);
-
-        //LOGIC TO HANDLE ERROR SHOULD BE HERE
+        return {
+            status: 500,
+            body: e
+        }
     }
-    //REGRESAR UN ERROR PORQUE NO SE PUDO COMPLETAR LA SOLICITUD
 }
 
 module.exports={

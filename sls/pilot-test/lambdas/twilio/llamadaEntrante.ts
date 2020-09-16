@@ -1,9 +1,9 @@
 import { APIGatewayEvent } from "aws-lambda";
 import { twiml } from "twilio";
-//import { sendTwiml } from "./utils";
 
 import qs from "querystring";
 import { getItem, updateItem } from "../../utils/dynamodb";
+import { getThingsAtt } from "../../utils";
 
 export const handler = async (event: APIGatewayEvent) => {
     const response = new twiml.VoiceResponse();
@@ -23,7 +23,6 @@ export const handler = async (event: APIGatewayEvent) => {
         );
     } else {
         let device  = await getItem({ TableName: 'alarmas', Key: { id: user.Item.id } });
-        //SUSTITUIR BUSQUEDA DE PARAMS EN DYNAMO POR BUSQUEDA EN TB
         if(device.Item === undefined){
             response.say(
                 {
@@ -33,13 +32,34 @@ export const handler = async (event: APIGatewayEvent) => {
             );
             console.error(`El dispositivo ${user.Item.id} no se encontró en la base de datos`);
         }
-        if(!device.Item.activo){
-            let query = `?deviceId=${user.Item.id}&alerta=${device.Item.alerta}&run=activate`
+        let neededParams = {
+            sharedKeys: ['Triggered','Emergency'],
+            clientKeys:['Bateria']
+        }
+        try{
+            var currParams = await getThingsAtt(device.Item.token, neededParams);
+            console.log('Current Device Parameters ');
+            console.log(currParams);
+        }catch(e){
+            console.error('Los parámetros no pudieron ser obtenidos de TB a continuación se muestra el error: ');
+            console.error(e);
+            var currParams = {
+                shared: {
+                    Triggered: device.Item?.Triggered 
+                },
+                client: {
+
+                }
+            }
+        }
+        
+        if(!currParams.shared.Triggered){
+            let query = `?deviceId=${user.Item.id}&run=activate&retry=false`
             let gather = response.gather({
                 input: 'dtmf',
                 timeout: 10,
                 numDigits: 1,
-                action: 'https://jp0sa107zc.execute-api.us-west-1.amazonaws.com/auth-things/handleGather'+query
+                action: process.env.GATHER_URL + query
             });
             gather.say(
                 {
@@ -49,12 +69,12 @@ export const handler = async (event: APIGatewayEvent) => {
             );
         } else {
             if(user.Item.tipo === "admin"){
-                let query = `?deviceId=${user.Item.id}&alerta=${device.Item.alerta}&run=deactivate`
+                let query = `?deviceId=${user.Item.id}&run=deactivate&retry=false`
                 let gather = response.gather({
                     input: 'dtmf',
                     timeout: 10,
                     numDigits: 1,
-                    action: 'https://jp0sa107zc.execute-api.us-west-1.amazonaws.com/auth-things/handleGather'+query
+                    action: process.env.GATHER_URL + query
                 });
                 gather.say(
                     {
