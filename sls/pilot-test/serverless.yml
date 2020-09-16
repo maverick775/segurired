@@ -5,6 +5,7 @@ org: lupnox
 provider:
   name: aws
   runtime: nodejs12.x
+  profile: serverless-admin
   region: us-west-1
   stage: dev
   iamRoleStatements:
@@ -25,16 +26,23 @@ provider:
               - secretsmanager:PutSecretValue
           Resource:
             - "arn:aws:secretsmanager:us-west-1:793033367648:secret:TB/RPCAuth-ekj9pb"
+        - Effect: Allow
+          Action: 
+              - sqs:DeleteMessage
+              - sqs:SendMessage
+              - sqs:ReceiveMessage
+          Resource:
+            - "arn:aws:sqs:us-west-1:793033367648:RPCs"
   
   #environment variables here
   environment:
     REGION:          "${opt:region, self:provider.region}"
     THINGS_URL:      "http://ec2-3-101-90-91.us-west-1.compute.amazonaws.com:8080/"
     AWS_EX_URL:      "https://l19mq6u0x5.execute-api.us-west-1.amazonaws.com/TBparams"
+    SQS_URL:         "https://sqs.us-west-1.amazonaws.com/793033367648/RPCs"
     GATHER_URL:      "${self:provider.environment.AWS_EX_URL}/handleGather"
     FINISH_CALL_URL: "${self:provider.environment.AWS_EX_URL}/finishCall"
     SEND_TG_MSG_URL: "${self:provider.environment.AWS_EX_URL}/sendRecordedMsg"
-
 functions:
   responder:
     handler: lambdas/twilio/llamadaEntrante.handler
@@ -75,6 +83,12 @@ functions:
                   path: sendRecordedMsg
                   method: POST
                   cors: true
+  rpcRequest:
+    handler: lambdas/thingsBoard/rpcRequest.handler
+    events:
+            - sqs: 
+                arn: arn:aws:sqs:us-west-1:793033367648:RPCs
+                batchSize: 10
 
 # you can add packaging information here
 #package:

@@ -3,9 +3,8 @@ import { APIGatewayEvent } from "aws-lambda";
 import { twiml } from "twilio";
 import { sendRPCRequest } from "../../utils";
 import { updateItem } from "../../utils/dynamodb";
+import { sendMessage } from "../../utils/sqs";
 import qs from "querystring";
-// 4. Pause call
-// 4.1 if call still going, tell visitor to try again
 
 export const handler = async (event: APIGatewayEvent) => {
     const response = new twiml.VoiceResponse();
@@ -53,19 +52,31 @@ export const handler = async (event: APIGatewayEvent) => {
                 }
                 return sendTwiml(response)
             }
-            let params = {
-                "method": method,
-                "params": {}
-            };
-            let thingsAnswer = await sendRPCRequest(deviceId, params);
-            console.log(thingsAnswer);
-            if(thingsAnswer.status >= 200 && thingsAnswer.status < 300){
+            //A SQS MSG SHOULD BE SENT HERE
+            let SQSparams = {
+                DelaySeconds: 0,
+                MessageAttributes: {
+                    "method":{
+                        DataType:  "String",
+                        StringValue: method
+                    },
+                    "deviceID":{
+                        DataType:  "String",
+                        StringValue: deviceId
+                    }
+                },
+                MessageBody: "rpcRequest",
+                QueueUrl: process.env.SQS_URL
+            }
+            let answerSQS = await sendMessage(SQSparams);
+            console.log(answerSQS);
+            if(answerSQS){
                 console.log('Alarma activada');
                 response.say(
                     {
                         language: 'es-MX'
                     },
-                    "Alarma activada, gracias. Para agregar mensaje de voz grabe después del tono"
+                    "Tu peticion fue recibida. Para agregar mensaje de voz grabe después del tono"
                 );
                 response.record({ //TRANSCRIBING SHOULD BE ADDED
                     timeout: 5,
@@ -73,10 +84,10 @@ export const handler = async (event: APIGatewayEvent) => {
                     recordingStatusCallback: process.env.SEND_TG_MSG_URL
                 });
                 
-                dynamoUpdateParams.shouldItemUpdate = true;
-                dynamoUpdateParams.method = method;
+                // dynamoUpdateParams.shouldItemUpdate = true;
+                // dynamoUpdateParams.method = method;
             }else{
-                console.error('Device could not be activated on first try, check the logs for more info');
+                console.error('SQS msg could not be sent, cehck logs for more details');
                 //HANDLE CASE WHERE THE RPC REQUEST WAS NOT SUCCESFUL 
                 //MAYBE A SECOND TRY SHOULD BE ATTEMPETED OR AT LEAST SEND A MESSAGE TO EVERYONE
                 //NOTE: SINCE LAST FIRMWARE MAJOR CHANGES, THE RESPONSE'S BODY HAS BEEN A PROMISE, IT SHOULD BE CORRECTED
@@ -124,22 +135,33 @@ export const handler = async (event: APIGatewayEvent) => {
                 }
                 return sendTwiml(response)
             }
-            let params = {
-                "method": method,
-                "params": {}
-            };
-            let thingsAnswer = await sendRPCRequest(deviceId, params);
-            console.log(thingsAnswer);
-            console.log('Alarma desactivada');
+             //A SQS MSG SHOULD BE SENT HERE
+             let SQSparams = {
+                DelaySeconds: 0,
+                MessageAttributes: {
+                    "method":{
+                        DataType:  "String",
+                        StringValue: method
+                    },
+                    "deviceID":{
+                        DataType:  "String",
+                        StringValue: deviceId
+                    }
+                },
+                MessageBody: "rpcRequest",
+                QueueUrl: process.env.SQS_URL
+            }
+            let answerSQS = await sendMessage(SQSparams);
+            console.log(answerSQS);
             response.say(
                 {
                     language: 'es-MX'
                 },
                 "Alarma desactivada, gracias."
             );
-            dynamoUpdateParams.shouldItemUpdate = true;
+            //dynamoUpdateParams.shouldItemUpdate = true;
         } catch (e) {
-            console.error('Error al activar alarma revisar registros de dispositivo ' + deviceId);
+            console.error('Error al desactivar alarma revisar registros de dispositivo ' + deviceId);
             console.error(e);
             response.say(
                 {
@@ -149,19 +171,19 @@ export const handler = async (event: APIGatewayEvent) => {
             );
         }
     }
-    //UPDATE DYNAMODB 
-    if (dynamoUpdateParams.shouldItemUpdate) {
-        try{
-            let answer = await updateAlarmStatus(deviceId, queryParams.run, dynamoUpdateParams.method);
-            console.log({
-                title: 'DB updated',
-                message: answer
-            });
-        }catch(e){
-            console.error('Dynamo no pudo ser actualizado');
-            console.error(e);
-        }
-    }
+    // //UPDATE DYNAMODB 
+    // if (dynamoUpdateParams.shouldItemUpdate) {
+    //     try{
+    //         let answer = await updateAlarmStatus(deviceId, queryParams.run, dynamoUpdateParams.method);
+    //         console.log({
+    //             title: 'DB updated',
+    //             message: answer
+    //         });
+    //     }catch(e){
+    //         console.error('Dynamo no pudo ser actualizado');
+    //         console.error(e);
+    //     }
+    // }
     return sendTwiml(response);
 };
 
