@@ -8,7 +8,7 @@ interface sqsMsg {
    MessageAttributes: any,
    MessageBody: string,
    QueueUrl: string
- };
+};
 
 export const sendMessage = async (message: sqsMsg)=>{
     return new Promise((resolve, reject) => {

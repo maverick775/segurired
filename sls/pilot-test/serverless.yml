@@ -43,6 +43,7 @@ provider:
     GATHER_URL:      "${self:provider.environment.AWS_EX_URL}/handleGather"
     FINISH_CALL_URL: "${self:provider.environment.AWS_EX_URL}/finishCall"
     SEND_TG_MSG_URL: "${self:provider.environment.AWS_EX_URL}/sendRecordedMsg"
+
 functions:
   responder:
     handler: lambdas/twilio/llamadaEntrante.handler
