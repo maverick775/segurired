@@ -79,7 +79,7 @@ const refreshAccessTokenTB = async(currTokens) => {
 }
 
 const getNewAuthTokensTB = async() => {
-    let url = 'http://ec2-3-101-90-91.us-west-1.compute.amazonaws.com:8080/api/auth/login';
+    let url = process.env.THINGS_URL+'api/auth/login';
     let headers = {'Content-Type': 'application/json'};
     
     //THIS INFO SHOULD BE SAVED ON A SECURE PLACE  I.E. SECRETS OR ENV.VAR

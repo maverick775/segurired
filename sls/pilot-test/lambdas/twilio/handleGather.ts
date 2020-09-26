@@ -74,7 +74,7 @@ export const handler = async (event: APIGatewayEvent) => {
                     "emg":{
                         DataType:  "String",
                         StringValue: params.trigger.toString()
-                    },
+                    }
                 },
                 MessageBody: "rpcRequest",
                 QueueUrl: process.env.SQS_URL
@@ -118,9 +118,10 @@ export const handler = async (event: APIGatewayEvent) => {
         }
     } else if (queryParams.run === 'deactivate') {
         try {
-            let method = "";
+            let method = '';
+            let params = {trigger: false, emg: false};
             if(parsedBody.Digits === '1'){
-                method = "desAl"
+                method = "set_state"
             }else{
                 console.log(queryParams.retry);
                 if(queryParams.retry === 'false'){
@@ -159,6 +160,14 @@ export const handler = async (event: APIGatewayEvent) => {
                     "deviceID":{
                         DataType:  "String",
                         StringValue: deviceId
+                    },
+                    "trigger":{
+                        DataType:  "String",
+                        StringValue: params.trigger.toString()
+                    },
+                    "emg":{
+                        DataType:  "String",
+                        StringValue: params.trigger.toString()
                     }
                 },
                 MessageBody: "rpcRequest",

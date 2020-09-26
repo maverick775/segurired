@@ -25,13 +25,7 @@ export const handler = async (event: APIGatewayEvent) => {
 
     //THESE NUMBERS SHOULD BE OBTAINED WITH SCAN ON DYNAMODB
     let numbers = ['+5213315209069', '+5213316011536'];
-    let answer = await sendBulkSMS(service, numbers, msg);
-    //let targetNumber = queryParams.from.slice(-10);
-    // let twilioAnswer = await client.messages.create({
-    //     body: msg,
-    //     from: '+12058904188',
-    //     to: `+521${targetNumber}`
-    // });
+    //let answer = await sendBulkSMS(service, numbers, msg);
 
     console.log(answer);
 
