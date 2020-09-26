@@ -64,7 +64,7 @@ const refreshAccessTokenTB = async(currTokens) => {
         throw new Error('One of the tokens passed to this function is missing, please check your passed parameters.');
     }
     //HERE SHOULD BE CODE TO GET NEW TOKEN AND REFRESH TOKEN IN CASE REFRESH TOKEN EXPIRES
-    let url = 'http://ec2-3-101-90-91.us-west-1.compute.amazonaws.com:8080/api/auth/token';
+    let url = process.env.THINGS_URL+'api/auth/token';
     let headers = {'Content-Type': 'application/json', 'X-Authorization': accessToken};
     let params = {
         "refreshToken":refreshToken

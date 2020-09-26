@@ -20,15 +20,18 @@ export const handler = async (event: APIGatewayEvent) => {
     dynamoUpdateParams.shouldItemUpdate = false;
     if (queryParams.run === 'activate') {
         try {
-            let method = '';
+            let method = 'set_state';
+            let params = {trigger: false, emg: false};
             if(parsedBody.Digits === '1'){
-                method = "actEm";
+                params.trigger = true;
+                params.emg = true;
             }else if(parsedBody.Digits === '2'){
-                method = "actAl";
+                params.trigger = true;
+                params.emg = false;
             }else{
                 console.log(queryParams.retry);
                 if(queryParams.retry === 'false'){
-                    let query = `?deviceId=${deviceId}&run=${queryParams.run}&retry=true`
+                    let query = `?deviceId=${deviceId}&run=${queryParams.run}&retry=true&params=${JSON.stringify(params)}`
                     let gather = response.gather({
                         input: 'dtmf',
                         timeout: 10,
@@ -63,7 +66,15 @@ export const handler = async (event: APIGatewayEvent) => {
                     "deviceID":{
                         DataType:  "String",
                         StringValue: deviceId
-                    }
+                    },
+                    "trigger":{
+                        DataType:  "String",
+                        StringValue: params.trigger.toString()
+                    },
+                    "emg":{
+                        DataType:  "String",
+                        StringValue: params.trigger.toString()
+                    },
                 },
                 MessageBody: "rpcRequest",
                 QueueUrl: process.env.SQS_URL

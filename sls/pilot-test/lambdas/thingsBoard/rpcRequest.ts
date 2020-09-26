@@ -13,9 +13,13 @@ export const handler = async (event, context) => {
         if (message.body === 'rpcRequest') {
             let RPCparams = {
                 method: message.messageAttributes?.method?.stringValue,
-                params: {}
+                params: {
+                    trigger: message.messageAttributes?.trigger?.stringValue === 'true',
+                    emg: message.messageAttributes?.emg?.stringValue === 'true'
+                }
             };
             let deviceID = message.messageAttributes?.deviceID?.stringValue;
+            console.log(RPCparams);
             let thingsAnswer = await sendRPCRequest(deviceID, RPCparams);
             console.log(thingsAnswer);
             let deleteParams = {

@@ -26,6 +26,7 @@ provider:
               - secretsmanager:PutSecretValue
           Resource:
             - "arn:aws:secretsmanager:us-west-1:793033367648:secret:TB/RPCAuth-ekj9pb"
+            - "arn:aws:secretsmanager:us-west-1:793033367648:secret:twilioAPIAuth-yWC9ha"
         - Effect: Allow
           Action: 
               - sqs:DeleteMessage
@@ -37,7 +38,7 @@ provider:
   #environment variables here
   environment:
     REGION:          "${opt:region, self:provider.region}"
-    THINGS_URL:      "http://ec2-3-101-90-91.us-west-1.compute.amazonaws.com:8080/"
+    THINGS_URL:      "http://seguri-red.ddns.net:8080/"
     AWS_EX_URL:      "https://l19mq6u0x5.execute-api.us-west-1.amazonaws.com/TBparams"
     SQS_URL:         "https://sqs.us-west-1.amazonaws.com/793033367648/RPCs"
     GATHER_URL:      "${self:provider.environment.AWS_EX_URL}/handleGather"
