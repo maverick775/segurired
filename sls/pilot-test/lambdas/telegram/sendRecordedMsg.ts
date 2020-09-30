@@ -1,6 +1,6 @@
 import { APIGatewayEvent } from "aws-lambda";
 import { getSecretValue } from "../../utils/secrets";
-import { scanItems } from "../../utils/dynamodb";
+import { getItem } from "../../utils/dynamodb";
 import twilio from "twilio";
 
 export const handler = async (event: APIGatewayEvent) => {
@@ -22,11 +22,8 @@ export const handler = async (event: APIGatewayEvent) => {
     let service = client.notify.services(twilioCredentials.notifyServiceID);
     let recordingURL = decodeURIComponent(parsedBody.RecordingUrl);
     let msg = `Fulanito de tal activó la alarma y dejó el siguiente mensaje de voz: ${recordingURL}`;
-
-    //THESE NUMBERS SHOULD BE OBTAINED WITH SCAN ON DYNAMODB
-    let numbers = ['+5213315209069', '+5213316011536'];
-    //let answer = await sendBulkSMS(service, numbers, msg);
-
+    let numbers = await getDeviceRelatedNumbers(queryParams?.deviceId);
+    let answer = await sendBulkSMS(service, numbers, msg);
     console.log(answer);
 
     return {
@@ -51,17 +48,16 @@ const parseTwilioBody = (body: string | null) => {
 }
 
 const getDeviceRelatedNumbers = async (deviceId: string) => {
-    let filterExpresion = '';
-    let scanParams = {};
-    let relatedRecords = await scanItems(scanParams);
-    console.log(relatedRecords)
+    let deviceData  = await getItem({ TableName: 'alarmas', Key: { id: deviceId } });
+    let numbers = deviceData.Item?.smsContacts;
+    return numbers
 }
 
 const sendBulkSMS = async (service: any, numbers: string[], msg: string) => {
     let bindings = numbers.map((number) => {
         return JSON.stringify({ binding_type: 'sms', address: number });
     });
-    try{
+    try {
         let twilioAns = await service.notifications.create({
             toBinding: bindings,
             body: msg
@@ -71,7 +67,7 @@ const sendBulkSMS = async (service: any, numbers: string[], msg: string) => {
             statusCode: 200,
             body: 'SENT'
         }
-    }catch(e){
+    } catch (e) {
         console.error(e);
     }
     return {

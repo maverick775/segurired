@@ -89,8 +89,7 @@ export const handler = async (event: APIGatewayEvent) => {
                     },
                     "Tu peticion fue recibida. Para agregar mensaje de voz grabe después del tono"
                 );
-                let from = decodeURIComponent(parsedBody?.From);
-                let query = `?from=${from}`
+                let query = `?deviceId=${deviceId}`
                 response.record({ //TRANSCRIBING SHOULD BE ADDED
                     timeout: 5,
                     action: process.env.FINISH_CALL_URL,
