@@ -35,6 +35,7 @@ provider:
             - "arn:aws:sqs:us-west-1:793033367648:RPCs"
   
   #environment variables here
+  #Poner atencion a los codigos de las variables cuando se cambie de usuario o de arquitectura.
   environment:
     REGION:          "${opt:region, self:provider.region}"
     THINGS_URL:      "http://ec2-3-101-90-91.us-west-1.compute.amazonaws.com:8080/"
@@ -74,7 +75,7 @@ functions:
                   method: GET
                   cors: true
             - schedule:
-                  rate: rate(7 minutes) 
+                  rate: rate(7 minutes) #Este intervalo es el que determina cada cuanto se actualizan las credenciales de ThingsBoard
                   enabled: true 
   sendRecordedMsg:
     handler: lambdas/telegram/sendRecordedMsg.handler
